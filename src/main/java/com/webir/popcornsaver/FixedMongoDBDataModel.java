@@ -299,6 +299,7 @@ public final class FixedMongoDBDataModel implements DataModel {
                     }
                 }
             }
+            cursor.close();
         }
 
         this.delegate = new GenericDataModel(GenericDataModel.toDataMap(userIDPrefMap, true));

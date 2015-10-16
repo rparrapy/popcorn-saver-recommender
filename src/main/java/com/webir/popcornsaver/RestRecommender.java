@@ -2,6 +2,7 @@ package com.webir.popcornsaver;
 
 import com.google.gson.Gson;
 import org.apache.mahout.cf.taste.recommender.Recommender;
+import spark.Spark;
 
 import java.util.List;
 
@@ -38,6 +39,7 @@ public class RestRecommender {
         return type;
     }
 
+
     public static void main(String[] args) {
         port(7000);
         get("/recommendations", (req, res) -> {
@@ -45,10 +47,10 @@ public class RestRecommender {
             String result = "";
             if (req.queryParams("type") != null) {
                 Recommender recommender = getRecommenderByType(req.queryParams("type"));
-                if(recommender == null) {
+                if (recommender == null) {
                     result = "Not a valid recommendation type";
                 } else {
-                    result = new Gson().toJson(recommender.recommend(1, 10));
+                    result = new Gson().toJson(recommender.recommend(Long.parseLong(req.queryParams("user")), 10));
                 }
             } else {
                 res.status(400);
@@ -63,7 +65,7 @@ public class RestRecommender {
             if (req.queryParams("type") != null) {
                 Recommender recommender = getRecommenderByType(req.queryParams("type"));
                 RecommenderType type = getRecommenderTypeByQueryParam(req.queryParams("type"));
-                if(recommender == null) {
+                if (recommender == null) {
                     result = "Not a valid recommendation type";
                 } else {
                     AveragedRecommenderEvaluator evaluator = new AveragedRecommenderEvaluator();
@@ -74,6 +76,25 @@ public class RestRecommender {
                 result = "Need a recommender type";
             }
             return result;
+        });
+
+        Spark.options("/*", (request, response) -> {
+
+            String accessControlRequestHeaders = request.headers("Access-Control-Request-Headers");
+            if (accessControlRequestHeaders != null) {
+                response.header("Access-Control-Allow-Headers", accessControlRequestHeaders);
+            }
+
+            String accessControlRequestMethod = request.headers("Access-Control-Request-Method");
+            if (accessControlRequestMethod != null) {
+                response.header("Access-Control-Allow-Methods", accessControlRequestMethod);
+            }
+
+            return "OK";
+        });
+
+        Spark.before((request, response) -> {
+            response.header("Access-Control-Allow-Origin", "*");
         });
     }
 }
